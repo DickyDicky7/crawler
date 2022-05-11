@@ -1,0 +1,4 @@
+:set -package pretty-simple
+:seti -interactive-print=Text.Pretty.Simple.pPrint
+:set +t
+:set +s
