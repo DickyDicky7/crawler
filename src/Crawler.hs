@@ -2,13 +2,14 @@ module Crawler
     ( start
     ) where
 
-import           Data.Aeson              hiding ( Array )
-import           Data.Array
-import           Data.Text               hiding ( map )
+import           Data.Aeson
+import           Data.Text               hiding ( concat
+                                                , concatMap
+                                                , map
+                                                )
 import           GHC.Generics
 import           Network.HTTP.Simple
 import           Text.Pretty.Simple
-import           Text.Regex.TDFA
 import           Text.XML
 import           Text.XML.Cursor
 
@@ -32,30 +33,24 @@ start = httpLBS "https://pitchfork.com/rss/reviews/albums/" >>= \response ->
         titles :: [Text]
         titles = cursor $// element "item" &/ element "title" &// content
 
-        -- getAlbumList :: Text -> Array Int Text
-        -- getAlbumList = drop 1 . getCaptureGroups
-        -- regex :: Text
-        -- regex = "(.*): (.*)"
+        toAlbumList :: Text -> [[Text]]
+        toAlbumList = map (splitOn ": ") . splitOn " // "
 
-        -- artistName_Song :: Text -> Array Int Text
-        -- artistName_Song = getCaptureGroups regex
+        albumList :: [[Text]]
+        albumList = concatMap toAlbumList titles
 
-        -- artistNames :: [Text]
-        -- artistNames = map artistName artists
+        toAlbumAwaitingDate :: [Text] -> (Text -> Album)
+        toAlbumAwaitingDate [artist, name] = Album artist name
+        toAlbumAwaitingDate _              = error "Unknown format"
 
         dates :: [Text]
         dates = cursor $// element "item" &/ element "pubDate" &// content
         --
     in  do
-            pPrint titles
+            pPrint albumList
 
   where
 
-    getCaptureGroups :: Text -> Text -> Array Int Text
-    getCaptureGroups regex text = getAllTextSubmatches (text =~ regex)
-
-    at :: Int -> Array Int Text -> Text
-    at index matches = matches ! index
 
     -- toAlbumAwaitingDate :: Array Int Text -> (Text -> Album)
     -- toAlbumAwaitingDate [a, t]      = Album a t
@@ -63,5 +58,3 @@ start = httpLBS "https://pitchfork.com/rss/reviews/albums/" >>= \response ->
     -- toAlbumAwaitingDate [a, t1, t2] = Album a (t1 <> ": " <> t2)
     -- toAlbumAwaitingDate _           = error "Unknown format"
 
-getCaptureGroups :: Text -> Text -> Array Int Text
-getCaptureGroups regex text = getAllTextSubmatches (text =~ regex)
