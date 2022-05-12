@@ -6,7 +6,9 @@ import           Data.Aeson
 import           Data.Text               hiding ( concat
                                                 , concatMap
                                                 , map
+                                                , zipWith
                                                 )
+import           Data.Time
 import           GHC.Generics
 import           Network.HTTP.Simple
 import           Text.Pretty.Simple
@@ -45,16 +47,23 @@ start = httpLBS "https://pitchfork.com/rss/reviews/albums/" >>= \response ->
 
         dates :: [Text]
         dates = cursor $// element "item" &/ element "pubDate" &// content
+
+        toUTCTime :: Text -> Maybe UTCTime
+        toUTCTime = parseTimeM True defaultTimeLocale "%a, %d %b %Y %X %z" . unpack
+
+        toDate :: Text -> Text
+        toDate = toUTCTime >>= \case
+            Nothing   -> return ""
+            Just date -> return (pack (formatTime defaultTimeLocale "%b %d" date))
+
+        dateList :: [Text]
+        dateList = map toDate dates
+
+        albums :: [Album]
+        albums = zipWith toAlbumAwaitingDate albumList dateList
         --
     in  do
-            pPrint albumList
-
-  where
+            encodeFile "src/album.json" albums
 
 
-    -- toAlbumAwaitingDate :: Array Int Text -> (Text -> Album)
-    -- toAlbumAwaitingDate [a, t]      = Album a t
-    -- toAlbumAwaitingDate [a]         = Album a ""
-    -- toAlbumAwaitingDate [a, t1, t2] = Album a (t1 <> ": " <> t2)
-    -- toAlbumAwaitingDate _           = error "Unknown format"
 
