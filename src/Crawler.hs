@@ -1,5 +1,5 @@
 module Crawler
-  ( --start
+  ( start
   ) where
 
 import           Control.Monad
