@@ -1,69 +1,107 @@
 module Crawler
-  ( start
+  ( --start
   ) where
 
+import           Control.Monad
 import           Data.Aeson
+import           Data.ByteString.Lazy           ( ByteString )
+import qualified Data.ByteString.Lazy          as BL
+import           Data.Maybe
 import           Data.Text                      ( Text )
 import qualified Data.Text                     as T
 import           Data.Time
+import           Data.Vector                    ( Vector )
+import qualified Data.Vector                   as V
+import           Data.Vector.Split
 import           GHC.Generics
 import           Network.HTTP.Simple
+import           System.Directory
 import           Text.Pretty.Simple
+import           Text.Regex.TDFA
 import           Text.XML
 import           Text.XML.Cursor
 
+data Book = Book
+  { title      :: Text
+  , date       :: Text
+  , categories :: Vector Text
+  }
+  deriving (Eq, Show, Read, Generic, FromJSON, ToJSON)
+
 start :: IO ()
 start = do
-  albums <- getPitchforkAlbums
-  encodeFile "src/album.json" albums
+  let path = "src/books.json"
+  path `BL.writeFile` "[]"
+  V.forM_ requestList (getBooks >=> (path `writeBooksJSON`))
 
-data Album = Album
-  { artist :: Text
-  , title  :: Text
-  , date   :: Text
-  }
-  deriving (Eq, Show, Generic, ToJSON)
+requestList :: Vector Request
+requestList =
+  [ "http://www.publicbooks.org/tag/global-black-history/feed"
+  , "http://www.publicbooks.org/tag/on-our-nightstands/feed"
+  , "http://www.publicbooks.org/tag/the-big-picture/feed"
+  , "http://www.publicbooks.org/tag/public-streets/feed"
+  , "http://www.publicbooks.org/tag/climate-change/feed"
+  , "http://www.publicbooks.org/tag/translation/feed"
+  , "http://www.publicbooks.org/tag/politics/feed"
+  , "http://www.publicbooks.org/tag/fiction/feed"
+  , "http://www.publicbooks.org/tag/gender/feed"
+  , "http://www.publicbooks.org/feed"
+  -- ...
+  ]
 
-getPitchforkAlbums :: IO [Album]
-getPitchforkAlbums =
-  httpLBS "https://pitchfork.com/rss/reviews/albums/" >>= \response ->
-    let
-        ---
-        document :: Document
-        document = parseLBS_ def (getResponseBody response)
+writeBooksJSON :: FilePath -> Vector Book -> IO ()
+writeBooksJSON path books = do
+  contents <- BL.readFile path
+  if BL.null contents
+    then path `BL.writeFile` toBooksJSON books
+    else do
+      let books' = fromBooksJSON contents V.++ books
+      path `BL.writeFile` toBooksJSON books'
 
-        cursor :: Cursor
-        cursor = fromDocument document
+toBooksJSON :: Vector Book -> ByteString
+toBooksJSON = encode
 
-        titles :: [Text]
-        titles = cursor $// element "item" &/ element "title" &// content
+fromBooksJSON :: ByteString -> Vector Book
+fromBooksJSON = fromMaybe [] . decode
 
-        toAlbumList :: Text -> [[Text]]
-        toAlbumList = map (T.splitOn ": ") . T.splitOn " // "
+getBooks :: Request -> IO (Vector Book)
+getBooks request =
+  getXMLCursor request >>= getXMLData >>= splitXMLData >>= processXMLData
 
-        albumList :: [[Text]]
-        albumList = concatMap toAlbumList titles
+getXMLCursor :: Request -> IO Cursor
+getXMLCursor = httpLBS >=> pure . fromDocument . parseDocument
+ where
+  ---
+  parseDocument :: Response ByteString -> Document
+  parseDocument = parseLBS_ def . getResponseBody
+  ---
 
-        toAlbumAwaitingDate :: [Text] -> (Text -> Album)
-        toAlbumAwaitingDate [artist, name] = Album artist name
-        toAlbumAwaitingDate _              = error "Unknown format"
+getXMLData :: Cursor -> IO (Vector Text)
+getXMLData = pure . V.fromList . ($// element "item" >=> child &// content)
 
-        dates :: [Text]
-        dates = cursor $// element "item" &/ element "pubDate" &// content
+splitXMLData :: Vector Text -> IO (Vector (Vector Text))
+splitXMLData = pure . V.filter ((> 1) . V.length) . V.fromList . split
+  (whenElt (=~ matchPattern))
+ where
+  ---
+  matchPattern :: Text
+  matchPattern = "<p>"
+  ---
 
-        toUTCTime :: Text -> Maybe UTCTime
-        toUTCTime = parseTimeM True defaultTimeLocale "%a, %d %b %Y %X %z" . T.unpack
+processXMLData :: Vector (Vector Text) -> IO (Vector Book)
+processXMLData = pure . V.map toBook
 
-        toDate :: Text -> Text
-        toDate = toUTCTime >>= \case
-          Nothing   -> return ""
-          Just date -> return (T.pack (formatTime defaultTimeLocale "%b %d" date))
+toBook :: Vector Text -> Book
+toBook = (\[[title, date], categories] -> Book { date = toDate date, .. })
+  . V.sequence [V.sequence [(V.! 0), (V.! 3)], getCategories]
+ where
+  ---
+  getCategories :: Vector Text -> Vector Text
+  getCategories bookData = V.slice 4 (V.length bookData - 5) bookData
+  ---
 
-        dateList :: [Text]
-        dateList = map toDate dates
+toUTCTime :: Text -> Maybe UTCTime
+toUTCTime = parseTimeM True defaultTimeLocale "%a, %d %b %Y %X %z" . T.unpack
 
-        albums :: [Album]
-        albums = zipWith toAlbumAwaitingDate albumList dateList
-        ---
-    in  pure albums
-
+toDate :: Text -> Text
+toDate = maybe "" (T.pack . formatTime defaultTimeLocale "%d-%m-%Y") . toUTCTime

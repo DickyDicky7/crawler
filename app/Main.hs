@@ -1,6 +1,6 @@
 module Main where
 
-import           Crawler                        ( start )
+-- import           Crawler                        ( start )
 
 main :: IO ()
-main = start
+main = error ""

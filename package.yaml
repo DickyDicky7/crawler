@@ -76,8 +76,8 @@ default-extensions:
   - KindSignatures
   - ScopedTypeVariables
   # - BangPatterns
-  # - StrictData
-  # - Strict
+  - StrictData
+  - Strict
   - DeriveGeneric
   # - NoImplicitPrelude
   # - TemplateHaskell
@@ -103,6 +103,8 @@ dependencies:
   - vector
   - array
   - split
+  - vector-split
+  - directory
 
 library:
   source-dirs: src
