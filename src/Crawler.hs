@@ -2,8 +2,10 @@ module Crawler
   ( start
   ) where
 
+import           Control.Concurrent.Async
 import           Control.Monad
 import           Data.Aeson
+import qualified Data.ByteString               as BS
 import           Data.ByteString.Lazy           ( ByteString )
 import qualified Data.ByteString.Lazy          as BL
 import           Data.Maybe
@@ -15,8 +17,9 @@ import qualified Data.Vector                   as V
 import           Data.Vector.Split
 import           GHC.Generics
 import           Network.HTTP.Simple
-import           System.Directory
-import           Text.Pretty.Simple
+import           Text.Pandoc.UTF8
+-- import           System.Directory
+-- import           Text.Pretty.Simple
 import           Text.Regex.TDFA
 import           Text.XML
 import           Text.XML.Cursor
@@ -29,12 +32,13 @@ data Book = Book
   deriving (Eq, Show, Read, Generic, FromJSON, ToJSON)
 
 start :: IO ()
-start = do
-  let path = "src/books.json"
-  path `BL.writeFile` "[]"
-  V.forM_ requestList (getBooks >=> (path `writeBooksJSON`))
+start = forConcurrently_
+  requestList
+  \request -> do
+    books <- getBooks (parseRequest_ (toString request))
+    getFilePath request `writeBooksJSON'` books
 
-requestList :: Vector Request
+requestList :: Vector BS.ByteString
 requestList =
   [ "http://www.publicbooks.org/tag/global-black-history/feed"
   , "http://www.publicbooks.org/tag/on-our-nightstands/feed"
@@ -49,14 +53,26 @@ requestList =
   -- ...
   ]
 
+getFilePath :: BS.ByteString -> String
+getFilePath = \case
+  "http://www.publicbooks.org/feed" -> "json/overall.json"
+  request                           -> toString
+    (BS.append
+      (BS.append "json/" (BS.take (BS.length request - 36) (BS.drop 31 request)))
+      ".json"
+    )
+
+writeBooksJSON' :: FilePath -> Vector Book -> IO ()
+writeBooksJSON' path books = path `BS.writeFile` BL.toStrict (toBooksJSON books)
+
 writeBooksJSON :: FilePath -> Vector Book -> IO ()
 writeBooksJSON path books = do
-  contents <- BL.readFile path
-  if BL.null contents
-    then path `BL.writeFile` toBooksJSON books
+  contents <- BS.readFile path
+  if BS.null contents
+    then path `BS.writeFile` BL.toStrict (toBooksJSON books)
     else do
-      let books' = fromBooksJSON contents V.++ books
-      path `BL.writeFile` toBooksJSON books'
+      let books' = fromBooksJSON (BL.fromStrict contents) V.++ books
+      path `BS.writeFile` BL.toStrict (toBooksJSON books')
 
 toBooksJSON :: Vector Book -> ByteString
 toBooksJSON = encode

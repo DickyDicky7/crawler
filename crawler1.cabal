@@ -31,60 +31,22 @@ library
   hs-source-dirs:
       src
   default-extensions:
-      ParallelListComp
-      TransformListComp
-      MonadComprehensions
       OverloadedLists
-      PostfixOperators
       TupleSections
       LambdaCase
       EmptyCase
       MultiWayIf
       BlockArguments
-      EmptyDataDecls
-      TypeOperators
-      ExplicitNamespaces
-      LiberalTypeSynonyms
-      ExistentialQuantification
-      GADTSyntax
-      GADTs
-      TypeFamilies
-      TypeFamilyDependencies
-      DataKinds
-      TypeInType
-      PolyKinds
-      StandaloneKindSignatures
-      StarIsType
       TypeApplications
-      RankNTypes
-      ImpredicativeTypes
-      RoleAnnotations
       DisambiguateRecordFields
       DuplicateRecordFields
       NamedFieldPuns
       RecordWildCards
-      EmptyDataDeriving
       StandaloneDeriving
-      DeriveFunctor
-      DeriveFoldable
-      DeriveTraversable
-      DeriveDataTypeable
-      DeriveLift
       GeneralizedNewtypeDeriving
       DeriveAnyClass
-      DerivingStrategies
-      DerivingVia
-      ViewPatterns
-      PatternSynonyms
-      MultiParamTypeClasses
-      TypeSynonymInstances
-      FlexibleInstances
       NumericUnderscores
       OverloadedStrings
-      FlexibleContexts
-      ConstraintKinds
-      ExplicitForAll
-      KindSignatures
       ScopedTypeVariables
       StrictData
       Strict
@@ -92,12 +54,15 @@ library
   build-depends:
       aeson
     , array
+    , async
     , base >=4.7 && <5
     , bytestring
+    , chronos-bench
     , containers
     , directory
     , http-client
     , http-conduit
+    , pandoc
     , pretty-simple
     , regex-tdfa
     , split
@@ -115,60 +80,22 @@ executable crawler1-exe
   hs-source-dirs:
       app
   default-extensions:
-      ParallelListComp
-      TransformListComp
-      MonadComprehensions
       OverloadedLists
-      PostfixOperators
       TupleSections
       LambdaCase
       EmptyCase
       MultiWayIf
       BlockArguments
-      EmptyDataDecls
-      TypeOperators
-      ExplicitNamespaces
-      LiberalTypeSynonyms
-      ExistentialQuantification
-      GADTSyntax
-      GADTs
-      TypeFamilies
-      TypeFamilyDependencies
-      DataKinds
-      TypeInType
-      PolyKinds
-      StandaloneKindSignatures
-      StarIsType
       TypeApplications
-      RankNTypes
-      ImpredicativeTypes
-      RoleAnnotations
       DisambiguateRecordFields
       DuplicateRecordFields
       NamedFieldPuns
       RecordWildCards
-      EmptyDataDeriving
       StandaloneDeriving
-      DeriveFunctor
-      DeriveFoldable
-      DeriveTraversable
-      DeriveDataTypeable
-      DeriveLift
       GeneralizedNewtypeDeriving
       DeriveAnyClass
-      DerivingStrategies
-      DerivingVia
-      ViewPatterns
-      PatternSynonyms
-      MultiParamTypeClasses
-      TypeSynonymInstances
-      FlexibleInstances
       NumericUnderscores
       OverloadedStrings
-      FlexibleContexts
-      ConstraintKinds
-      ExplicitForAll
-      KindSignatures
       ScopedTypeVariables
       StrictData
       Strict
@@ -177,13 +104,16 @@ executable crawler1-exe
   build-depends:
       aeson
     , array
+    , async
     , base >=4.7 && <5
     , bytestring
+    , chronos-bench
     , containers
     , crawler1
     , directory
     , http-client
     , http-conduit
+    , pandoc
     , pretty-simple
     , regex-tdfa
     , split
@@ -202,60 +132,22 @@ test-suite crawler1-test
   hs-source-dirs:
       test
   default-extensions:
-      ParallelListComp
-      TransformListComp
-      MonadComprehensions
       OverloadedLists
-      PostfixOperators
       TupleSections
       LambdaCase
       EmptyCase
       MultiWayIf
       BlockArguments
-      EmptyDataDecls
-      TypeOperators
-      ExplicitNamespaces
-      LiberalTypeSynonyms
-      ExistentialQuantification
-      GADTSyntax
-      GADTs
-      TypeFamilies
-      TypeFamilyDependencies
-      DataKinds
-      TypeInType
-      PolyKinds
-      StandaloneKindSignatures
-      StarIsType
       TypeApplications
-      RankNTypes
-      ImpredicativeTypes
-      RoleAnnotations
       DisambiguateRecordFields
       DuplicateRecordFields
       NamedFieldPuns
       RecordWildCards
-      EmptyDataDeriving
       StandaloneDeriving
-      DeriveFunctor
-      DeriveFoldable
-      DeriveTraversable
-      DeriveDataTypeable
-      DeriveLift
       GeneralizedNewtypeDeriving
       DeriveAnyClass
-      DerivingStrategies
-      DerivingVia
-      ViewPatterns
-      PatternSynonyms
-      MultiParamTypeClasses
-      TypeSynonymInstances
-      FlexibleInstances
       NumericUnderscores
       OverloadedStrings
-      FlexibleContexts
-      ConstraintKinds
-      ExplicitForAll
-      KindSignatures
       ScopedTypeVariables
       StrictData
       Strict
@@ -264,13 +156,16 @@ test-suite crawler1-test
   build-depends:
       aeson
     , array
+    , async
     , base >=4.7 && <5
     , bytestring
+    , chronos-bench
     , containers
     , crawler1
     , directory
     , http-client
     , http-conduit
+    , pandoc
     , pretty-simple
     , regex-tdfa
     , split

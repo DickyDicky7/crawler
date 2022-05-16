@@ -20,60 +20,60 @@ extra-source-files:
 description: Please see the README on GitHub at <https://github.com/githubuser/crawler1#readme>
 
 default-extensions:
-  - ParallelListComp
-  - TransformListComp
-  - MonadComprehensions
+  # - ParallelListComp
+  # - TransformListComp
+  # - MonadComprehensions
   - OverloadedLists
-  - PostfixOperators
+  # - PostfixOperators
   - TupleSections
   - LambdaCase
   - EmptyCase
   - MultiWayIf
   - BlockArguments
-  - EmptyDataDecls
-  - TypeOperators
-  - ExplicitNamespaces
-  - LiberalTypeSynonyms
-  - ExistentialQuantification
-  - GADTSyntax
-  - GADTs
-  - TypeFamilies
-  - TypeFamilyDependencies
-  - DataKinds
-  - TypeInType
-  - PolyKinds
-  - StandaloneKindSignatures
-  - StarIsType
+  # - EmptyDataDecls
+  # - TypeOperators
+  # - ExplicitNamespaces
+  # - LiberalTypeSynonyms
+  # - ExistentialQuantification
+  # - GADTSyntax
+  # - GADTs
+  # - TypeFamilies
+  # - TypeFamilyDependencies
+  # - DataKinds
+  # - TypeInType
+  # - PolyKinds
+  # - StandaloneKindSignatures
+  # - StarIsType
   - TypeApplications
-  - RankNTypes
-  - ImpredicativeTypes
-  - RoleAnnotations
+  # - RankNTypes
+  # - ImpredicativeTypes
+  # - RoleAnnotations
   - DisambiguateRecordFields
   - DuplicateRecordFields
   - NamedFieldPuns
   - RecordWildCards
-  - EmptyDataDeriving
+  # - EmptyDataDeriving
   - StandaloneDeriving
-  - DeriveFunctor
-  - DeriveFoldable
-  - DeriveTraversable
-  - DeriveDataTypeable
-  - DeriveLift
+  # - DeriveFunctor
+  # - DeriveFoldable
+  # - DeriveTraversable
+  # - DeriveDataTypeable
+  # - DeriveLift
   - GeneralizedNewtypeDeriving
   - DeriveAnyClass
-  - DerivingStrategies
-  - DerivingVia
-  - ViewPatterns
-  - PatternSynonyms
-  - MultiParamTypeClasses
-  - TypeSynonymInstances
-  - FlexibleInstances
+  # - DerivingStrategies
+  # - DerivingVia
+  # - ViewPatterns
+  # - PatternSynonyms
+  # - MultiParamTypeClasses
+  # - TypeSynonymInstances
+  # - FlexibleInstances
   - NumericUnderscores
   - OverloadedStrings
-  - FlexibleContexts
-  - ConstraintKinds
-  - ExplicitForAll
-  - KindSignatures
+  # - FlexibleContexts
+  # - ConstraintKinds
+  # - ExplicitForAll
+  # - KindSignatures
   - ScopedTypeVariables
   # - BangPatterns
   - StrictData
@@ -105,6 +105,9 @@ dependencies:
   - split
   - vector-split
   - directory
+  - chronos-bench
+  - pandoc
+  - async
 
 library:
   source-dirs: src
