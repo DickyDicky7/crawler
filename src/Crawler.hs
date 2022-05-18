@@ -32,11 +32,9 @@ data Book = Book
   deriving (Eq, Show, Read, Generic, FromJSON, ToJSON)
 
 start :: IO ()
-start = forConcurrently_
-  requestList
-  \request -> do
-    books <- getBooks (parseRequest_ (toString request))
-    getFilePath request `writeBooksJSON'` books
+start = requestList `forConcurrently_` \request -> do
+  books <- getBooks (parseRequest_ (toString request))
+  getFilePath request `writeBooksJSON'` books
 
 requestList :: Vector BS.ByteString
 requestList =
