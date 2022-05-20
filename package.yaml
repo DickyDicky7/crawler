@@ -31,7 +31,7 @@ default-extensions:
   - MultiWayIf
   - BlockArguments
   # - EmptyDataDecls
-  # - TypeOperators
+  - TypeOperators
   # - ExplicitNamespaces
   # - LiberalTypeSynonyms
   # - ExistentialQuantification
@@ -39,7 +39,7 @@ default-extensions:
   # - GADTs
   # - TypeFamilies
   # - TypeFamilyDependencies
-  # - DataKinds
+  - DataKinds
   # - TypeInType
   # - PolyKinds
   # - StandaloneKindSignatures
@@ -79,9 +79,9 @@ default-extensions:
   - StrictData
   - Strict
   - DeriveGeneric
-  # - NoImplicitPrelude
+  - NoImplicitPrelude
   # - TemplateHaskell
-  # - QuasiQuotes
+  - QuasiQuotes
   # - UndecidableInstances
   # - AllowAmbiguousTypes
   # - OverlappingInstances
@@ -108,6 +108,16 @@ dependencies:
   - chronos-bench
   - pandoc
   - async
+  - servant-server
+  - shakespeare
+  - rapid
+  - servant-blaze
+  - transformers
+  - warp
+  - wai-logger
+  - servant
+  - universum
+  - unliftio
 
 library:
   source-dirs: src

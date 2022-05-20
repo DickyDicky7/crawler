@@ -2,41 +2,36 @@ module Crawler
   ( start
   ) where
 
-import           Control.Concurrent.Async
-import           Control.Monad
-import           Data.Aeson
-import qualified Data.ByteString               as BS
-import           Data.ByteString.Lazy           ( ByteString )
-import qualified Data.ByteString.Lazy          as BL
-import           Data.Maybe
-import           Data.Text                      ( Text )
-import qualified Data.Text                     as T
-import           Data.Time
+import qualified Control.Concurrent.Async      as Async
+import qualified Data.Aeson                    as JSON
+import qualified Data.ByteString               as Strict
+import qualified Data.ByteString.Lazy          as Lazy
+import           Data.Time                      ( UTCTime )
+import qualified Data.Time                     as Time
 import           Data.Vector                    ( Vector )
-import qualified Data.Vector                   as V
-import           Data.Vector.Split
-import           GHC.Generics
-import           Network.HTTP.Simple
-import           Text.Pandoc.UTF8
--- import           System.Directory
--- import           Text.Pretty.Simple
+import qualified Data.Vector                   as Vector
+import qualified Data.Vector.Split             as Vector.Util
+import qualified Network.HTTP.Simple           as Network
 import           Text.Regex.TDFA
-import           Text.XML
+import           Text.XML                       ( Document )
+import qualified Text.XML                      as XML
 import           Text.XML.Cursor
+import           Universum
+import qualified Universum.Unsafe              as Unsafe
 
 data Book = Book
   { title      :: Text
   , date       :: Text
   , categories :: Vector Text
   }
-  deriving (Eq, Show, Read, Generic, FromJSON, ToJSON)
+  deriving (Eq, Show, Read, Generic, JSON.FromJSON, JSON.ToJSON)
 
 start :: IO ()
-start = requestList `forConcurrently_` \request -> do
-  books <- getBooks (parseRequest_ (toString request))
-  getFilePath request `writeBooksJSON'` books
+start = requestList `Async.forConcurrently_` \request -> do
+  books <- getBooks (Network.parseRequest_ (decodeUtf8 request))
+  getFilePath request `writeBooksJSON` books
 
-requestList :: Vector BS.ByteString
+requestList :: Vector ByteString
 requestList =
   [ "http://www.publicbooks.org/tag/global-black-history/feed"
   , "http://www.publicbooks.org/tag/on-our-nightstands/feed"
@@ -51,51 +46,37 @@ requestList =
   -- ...
   ]
 
-getFilePath :: BS.ByteString -> String
+getFilePath :: ByteString -> String
 getFilePath = \case
   "http://www.publicbooks.org/feed" -> "json/overall.json"
-  request                           -> toString
-    (BS.append
-      (BS.append "json/" (BS.take (BS.length request - 36) (BS.drop 31 request)))
-      ".json"
-    )
-
-writeBooksJSON' :: FilePath -> Vector Book -> IO ()
-writeBooksJSON' path books = path `BS.writeFile` BL.toStrict (toBooksJSON books)
+  request -> decodeUtf8 ("json/" <> Strict.take (length request - 36) (Strict.drop 31 request) <> ".json")
 
 writeBooksJSON :: FilePath -> Vector Book -> IO ()
-writeBooksJSON path books = do
-  contents <- BS.readFile path
-  if BS.null contents
-    then path `BS.writeFile` BL.toStrict (toBooksJSON books)
-    else do
-      let books' = fromBooksJSON (BL.fromStrict contents) V.++ books
-      path `BS.writeFile` BL.toStrict (toBooksJSON books')
+writeBooksJSON path books = path `Strict.writeFile` Lazy.toStrict (toBooksJSON books)
 
-toBooksJSON :: Vector Book -> ByteString
-toBooksJSON = encode
+toBooksJSON :: Vector Book -> LByteString
+toBooksJSON = JSON.encode
 
-fromBooksJSON :: ByteString -> Vector Book
-fromBooksJSON = fromMaybe [] . decode
+fromBooksJSON :: LByteString -> Vector Book
+fromBooksJSON = fromMaybe [] . JSON.decode
 
-getBooks :: Request -> IO (Vector Book)
-getBooks request =
-  getXMLCursor request >>= getXMLData >>= splitXMLData >>= processXMLData
+getBooks :: Network.Request -> IO (Vector Book)
+getBooks request = getXMLCursor request >>= getXMLData >>= splitXMLData >>= processXMLData
 
-getXMLCursor :: Request -> IO Cursor
-getXMLCursor = httpLBS >=> pure . fromDocument . parseDocument
+getXMLCursor :: Network.Request -> IO Cursor
+getXMLCursor = Network.httpLBS >=> pure . fromDocument . parseDocument
  where
   ---
-  parseDocument :: Response ByteString -> Document
-  parseDocument = parseLBS_ def . getResponseBody
+  parseDocument :: Network.Response LByteString -> Document
+  parseDocument = XML.parseLBS_ XML.def . Network.getResponseBody
   ---
 
 getXMLData :: Cursor -> IO (Vector Text)
-getXMLData = pure . V.fromList . ($// element "item" >=> child &// content)
+getXMLData = pure . Vector.fromList . ($// element "item" >=> child &// content)
 
 splitXMLData :: Vector Text -> IO (Vector (Vector Text))
-splitXMLData = pure . V.filter ((> 1) . V.length) . V.fromList . split
-  (whenElt (=~ matchPattern))
+splitXMLData = pure . Vector.filter ((> 1) . Vector.length) . Vector.fromList . Vector.Util.split
+  (Vector.Util.whenElt (=~ matchPattern))
  where
   ---
   matchPattern :: Text
@@ -103,19 +84,19 @@ splitXMLData = pure . V.filter ((> 1) . V.length) . V.fromList . split
   ---
 
 processXMLData :: Vector (Vector Text) -> IO (Vector Book)
-processXMLData = pure . V.map toBook
+processXMLData = pure . Vector.map toBook
 
 toBook :: Vector Text -> Book
 toBook = (\[[title, date], categories] -> Book { date = toDate date, .. })
-  . V.sequence [V.sequence [(V.! 0), (V.! 3)], getCategories]
+  . Vector.sequence [Vector.sequence [(Vector.! 0), (Vector.! 3)], getCategories]
  where
   ---
   getCategories :: Vector Text -> Vector Text
-  getCategories bookData = V.slice 4 (V.length bookData - 5) bookData
+  getCategories bookData = Vector.slice 4 (Vector.length bookData - 5) bookData
   ---
 
 toUTCTime :: Text -> Maybe UTCTime
-toUTCTime = parseTimeM True defaultTimeLocale "%a, %d %b %Y %X %z" . T.unpack
+toUTCTime = Time.parseTimeM True Time.defaultTimeLocale "%a, %d %b %Y %X %z" . toString
 
 toDate :: Text -> Text
-toDate = maybe "" (T.pack . formatTime defaultTimeLocale "%d-%m-%Y") . toUTCTime
+toDate = maybe "" (toText . Time.formatTime Time.defaultTimeLocale "%d-%m-%Y") . toUTCTime

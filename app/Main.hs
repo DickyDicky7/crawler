@@ -1,7 +1,9 @@
 module Main where
 
 -- import           Chronos.Bench
-import           Crawler                        ( start )
+import           Server                         ( start )
+import           Universum
+import qualified Universum.Unsafe              as Unsafe
 
 -- main :: IO ()
 -- main = defaultMain [benchIO "execute" start]
